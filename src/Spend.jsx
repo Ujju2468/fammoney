@@ -75,7 +75,7 @@ export default function Spend({ m, members }) {
       {err && <p className="err">{err}</p>}
       <button onClick={add}>Save</button><button className="alt" onClick={() => setOpen(false)}>Cancel</button></div>
       : <button onClick={() => setOpen(true)}>+ Add expense</button>}
-    {failed.length > 0 && <p className="err">{failed.length} entry(ies) were rejected by the server: {failed[0].error}</p>}
+    {failed.length > 0 && <p className="err">{failed.length} entry(ies) could not be saved: {failed[0].error.includes('month_closed') ? 'this month is closed. Ask an Owner to reopen it.' : failed[0].error}</p>}
     <div className="card full"><h2>Recent activity</h2>
       {all.slice(0, 30).map(t => (<div className="row" key={t.id}>
         <span>{catName(t.category_id)}<br /><span className="muted">{who(t.member_id)}{t.for_member_id ? ` → for ${who(t.for_member_id)}` : ''} · {when(t.occurred_at)}{t.pending ? ' · ⏳ waiting to sync' : ''}</span></span>

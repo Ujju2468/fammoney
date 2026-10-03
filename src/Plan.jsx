@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { sb } from './lib/supabase'
 import { useData, inr, mkey } from './lib/hooks'
+import Report from './Report.jsx'
 
 export default function Plan({ m, members }) {
   const mk = mkey(new Date()), hid = m.household.id, owner = m.role === 'owner'
   const [inc, setInc] = useState(''), [f, setF] = useState({ mem: m.id, cat: '', amt: '' }), [err, setErr] = useState('')
   const [d, reload] = useData(async () => {
     const [p, i, c, t] = await Promise.all([
-      sb.from('month_plans').select('id,status').eq('month_key', mk).maybeSingle(),
+      sb.from('month_plans').select('id,status,version').eq('month_key', mk).maybeSingle(),
       sb.from('income_entries').select('amount_paise').eq('month_key', mk),
       sb.from('categories').select('id,name,parent_id,archived').order('sort'),
       sb.from('transactions').select('member_id,category_id,amount_paise').eq('month_key', mk).eq('status', 'active')])
@@ -22,6 +23,8 @@ export default function Plan({ m, members }) {
     <h1>Monthly budget · {mk}</h1>
     {!d.plan ? (owner ? <button onClick={() => run(sb.from('month_plans').insert({ household_id: hid, month_key: mk, status: 'active' }))}>Start this month's budget</button>
       : <p className="muted">The Owners have not set this month's budget yet.</p>) : <>
+      <div className="row" style={{ border: 0 }}><span className="pill" style={{ color: d.plan.status === 'closed' ? 'var(--accent)' : 'var(--secondary)' }}>{d.plan.status === 'closed' ? '🔒 Month closed' : 'Month open'}</span>
+        {owner && <a onClick={() => { const c = d.plan.status === 'closed'; if (confirm(c ? 'Reopen this month?' : 'Close this month? Nobody can add or edit spends in it.')) run(sb.from('month_plans').update({ status: c ? 'active' : 'closed', version: d.plan.version }).eq('id', d.plan.id)) }}>{d.plan.status === 'closed' ? 'Reopen' : 'Close month'}</a>}</div>
       {m.role !== 'dependent' && <div className="card"><div className="row" style={{ border: 0 }}><span>Income</span><b>{inr(income)}</b></div>
         <div className="row" style={{ border: 0 }}><span>Not yet assigned</span><b className={income - alloc < 0 ? 'err' : 'ok'}>{income - alloc < 0 ? '▲ ' : ''}{inr(income - alloc)}</b></div>
         {owner && <><label>Add salary / income (₹)</label><input inputMode="decimal" value={inc} onChange={e => setInc(e.target.value)} placeholder="40000" />
@@ -39,5 +42,6 @@ export default function Plan({ m, members }) {
           <div className="row" style={{ border: 0 }}><span className="muted">Spent {inr(sp)} of {inr(a.amount_paise)}</span><b className={left < 0 ? 'err' : 'ok'}>{left < 0 ? `▲ ${inr(-left)} over` : `✓ ${inr(left)} left`}</b></div>
           <div className="bar"><i style={{ width: `${Math.min(100, a.amount_paise ? sp / a.amount_paise * 100 : 100)}%`, background: left < 0 ? 'var(--danger-text)' : 'var(--accent)' }} /></div></div> })}
     </>}
+    <Report />
     {err && <p className="err">{err}</p>}</>)
 }

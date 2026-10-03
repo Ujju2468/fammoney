@@ -1,32 +1,37 @@
 # FamMoney
 
-Family expense tracker (blueprint v1.0, `../idea-blueprint.md`). Free stack: React PWA + Supabase + free static host.
+A private family expense tracker: one salary, budgets per person, every rupee logged, shared live. Installable web app (PWA) for Android, iPhone and desktop.
+Blueprint: `../idea-blueprint.md` (v1.0.2). Stack: React + Vite, Supabase (Postgres, login, live updates), Vercel hosting, all free.
 
-## Status
-- [x] Slice 1: database (`supabase/migrations/001_init.sql`): tables, row-level security, audit log, caps, invites, realtime
-- [x] Slice 2: app shell (Vite + React + dark theme + sign-in + create household + invites)
-- [x] Slice 3: walking skeleton (add spend offline, sync, second device sees it, bar chart)
-- [x] Slice 4 (MVP core): plan + envelopes, edit/void own spends, charts (month/year), calendar, audit log, installable app with update banner
-- [x] Update 2: grouped categories, budgets, day notes/reminders, clock + weather (run migrations/002 first)
-- [ ] Next: nightly backup job, month close, bill photos, alerts, forced-update screen
+## Decisions for the pilot
+- **Supabase stays** for the first few weeks (DEC-017). Review after real use: stay, self-host on an old laptop, or go phone-only.
+- **No weather, no location** (DEC-018). Header shows date and time only.
+- **Backup = you, once a month** (DEC-019): Budget tab > Month report > Download CSV (restorable, every entry) + Save as PDF (readable). Keep copies on your phone and a laptop/pen drive.
+- **Privacy**: GitHub and Vercel hold only code. Supabase holds the data. Entering salary is optional; budgets and spends work without it.
+
+## Database (run once each, in order, in Supabase > SQL Editor > New query)
+1. `supabase/migrations/001_init.sql`  2. `002_categories_notes.sql` (safe to re-run)  3. `003_ping.sql`
 
 ## Run locally
 ```
 npm install
-cp .env.example .env     # then paste your sb_publishable key into .env
-npm run dev              # opens http://localhost:5173
+cp .env.example .env    # paste your sb_publishable_... key
+npm run dev             # http://localhost:5173
 ```
-Supabase > Authentication > URL Configuration: set Site URL `http://localhost:5173` and add `http://localhost:5173/**` to Redirect URLs.
-Key: Supabase > Settings > API Keys > Publishable key (`sb_publishable_...`), or the Legacy tab's `anon`.
+## Deploy (Vercel)
+Import the repo, add `VITE_SUPABASE_URL` and `VITE_SUPABASE_KEY`, deploy. Then Supabase > Authentication > URL Configuration: Site URL + `…/**` redirect = your Vercel address (keep localhost too).
+Install on phones: Chrome > Install app, or Safari > Share > Add to Home Screen. Updates arrive as an "Update available" banner. To force an update: `update app_config set min_app_version = '0.5.0';`
 
-## Setup (all free)
-1. GitHub: create an account and an empty private repo `fammoney`; upload this folder.
-2. Supabase: new project (region nearest India), then SQL Editor > paste `001_init.sql` > Run.
-3. Supabase > Authentication > Providers: enable Email (magic link) and, if wanted, Google.
-4. Keep the Project URL and `anon` key for slice 2. Never share the `service_role` key.
-5. Host later on Cloudflare Pages, Vercel or Netlify (any one).
+## Keep-alive (optional, sends no data)
+Free Supabase pauses after 7 idle days; daily family use prevents that. As a safety net, add GitHub secrets `SUPABASE_URL` and `SUPABASE_KEY` (publishable key), then Actions > "Keep Supabase awake" > Run workflow once.
 
-## Tests to run after step 2 (VAL-003)
-- A member cannot update another member's transaction (expect 0 rows).
-- A third Owner is rejected (`max_two_owners`); the last Owner cannot leave (`last_owner`).
-- Editing `audit_entries` fails (`audit_is_append_only`).
+## Monthly routine (5 minutes)
+1. Budget tab > Close month (locks it).
+2. Month report > Download CSV + Save as PDF; store them safely.
+3. Start next month's budget and add the new salary (optional).
+
+## Pilot checklist (2-4 weeks)
+Everyone logs at least 5 entries a week; try offline entries; try edit/void; check alerts; note what annoys you. Then decide the next step.
+
+## Later (after the pilot)
+Bill photos, custom date ranges, push notifications, visual redesign, more members, Android APK wrapper (Capacitor), self-hosting.
