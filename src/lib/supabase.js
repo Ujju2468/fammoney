@@ -9,7 +9,7 @@ export const data = {
     return m?.[0] ?? null
   },
   async members(h) {
-    const { data: m, error } = await sb.from('members').select('id,display_name,role,status').eq('household_id', h).order('created_at')
+    const { data: m, error } = await sb.from('members').select('id,user_id,display_name,role,status').eq('household_id', h).order('created_at')
     if (error) throw error
     return m
   },

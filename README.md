@@ -5,8 +5,9 @@ Family expense tracker (blueprint v1.0, `../idea-blueprint.md`). Free stack: Rea
 ## Status
 - [x] Slice 1: database (`supabase/migrations/001_init.sql`): tables, row-level security, audit log, caps, invites, realtime
 - [x] Slice 2: app shell (Vite + React + dark theme + sign-in + create household + invites)
-- [ ] Slice 3: walking skeleton (add spend offline, sync, second device sees it, bar chart)
-- [ ] Slice 4: plan/envelopes, list, calendar, pie, audit screen, PWA update banner
+- [x] Slice 3: walking skeleton (add spend offline, sync, second device sees it, bar chart)
+- [x] Slice 4 (MVP core): plan + envelopes, edit/void own spends, charts (month/year), calendar, audit log, installable app with update banner
+- [ ] Next: nightly backup job, month close, bill photos, alerts, forced-update screen
 
 ## Run locally
 ```
