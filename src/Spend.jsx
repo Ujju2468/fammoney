@@ -26,7 +26,7 @@ export default function Spend({ m, members }) {
 
   useEffect(() => {
     loadCache().then(setTxs); loadQueue().then(setQueue); loadFailed().then(setFailed)
-    sb.from('categories').select('id,name,kind').eq('archived', false).then(({ data }) => { setCats(data || []); if (data?.[0]) setF(x => ({ ...x, cat: data[0].id })) })
+    sb.from('categories').select('id,name,parent_id,archived').order('sort').then(({ data }) => { setCats(data || []); const l = (data || []).find(c => !c.archived && !data.some(x => x.parent_id === c.id)); if (l) setF(x => ({ ...x, cat: l.id })) })
     sync()
     const on = () => { setOnline(true); sync() }, off = () => setOnline(false), vis = () => document.visibilityState === 'visible' && sync()
     addEventListener('online', on); addEventListener('offline', off); document.addEventListener('visibilitychange', vis)
@@ -60,23 +60,23 @@ export default function Spend({ m, members }) {
 
   return (<>
     <div className="card">
-      <div className="row" style={{ border: 0 }}><span className="muted">This month</span><span className="pill" style={{ color: online ? 'var(--secondary)' : 'var(--accent)' }}>{pill}{queue.length ? ` · ${queue.length} waiting` : ''}</span></div>
+      <div className="row" style={{ border: 0 }}><span className="muted">Spent this month</span><span className="pill" style={{ color: online ? 'var(--secondary)' : 'var(--accent)' }}>{pill}{queue.length ? ` · ${queue.length} waiting` : ''}</span></div>
       <h1 style={{ fontSize: 'var(--fs-3xl)', margin: 0 }}>{inr(total)}</h1>
       {byCat.length === 0 && <p className="muted">No spends yet this month. Tap + to add one.</p>}
       {byCat.map(([id, v]) => (<div key={id} style={{ margin: '.6rem 0' }}>
         <div className="row" style={{ border: 0, padding: 0 }}><span>{catName(id)}</span><span>{inr(v)}</span></div>
         <div className="bar"><i style={{ width: `${Math.max(4, (v / max) * 100)}%` }} /></div></div>))}
     </div>
-    {open ? <div className="card"><h2>Add a spend</h2>
+    {open ? <div className="card"><h2>New expense</h2>
       <label>Amount (₹)</label><input inputMode="decimal" autoFocus value={f.amt} onChange={e => setF({ ...f, amt: e.target.value })} placeholder="500" />
-      <label>Category</label><select value={f.cat} onChange={e => setF({ ...f, cat: e.target.value })}>{cats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
-      <label>Paid by</label><select value={f.mode} onChange={e => setF({ ...f, mode: e.target.value })}>{MODES.map(x => <option key={x}>{x}</option>)}</select>
+      <label>Category</label><select value={f.cat} onChange={e => setF({ ...f, cat: e.target.value })}>{cats.filter(g => !g.archived && !g.parent_id).map(g => { const ch = cats.filter(c => c.parent_id === g.id && !c.archived); return ch.length ? <optgroup key={g.id} label={g.name}>{ch.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</optgroup> : <option key={g.id} value={g.id}>{g.name}</option> })}</select>
+      <label>Payment mode</label><select value={f.mode} onChange={e => setF({ ...f, mode: e.target.value })}>{MODES.map(x => <option key={x}>{x}</option>)}</select>
       <label>Spent for (optional)</label><select value={f.forM} onChange={e => setF({ ...f, forM: e.target.value })}><option value="">Myself / household</option>{members.filter(x => x.id !== m.id).map(x => <option key={x.id} value={x.id}>{x.display_name}</option>)}</select>
       {err && <p className="err">{err}</p>}
       <button onClick={add}>Save</button><button className="alt" onClick={() => setOpen(false)}>Cancel</button></div>
-      : <button onClick={() => setOpen(true)}>+ Add spend</button>}
+      : <button onClick={() => setOpen(true)}>+ Add expense</button>}
     {failed.length > 0 && <p className="err">{failed.length} entry(ies) were rejected by the server: {failed[0].error}</p>}
-    <div className="card"><h2>Recent</h2>
+    <div className="card full"><h2>Recent activity</h2>
       {all.slice(0, 30).map(t => (<div className="row" key={t.id}>
         <span>{catName(t.category_id)}<br /><span className="muted">{who(t.member_id)}{t.for_member_id ? ` → for ${who(t.for_member_id)}` : ''} · {when(t.occurred_at)}{t.pending ? ' · ⏳ waiting to sync' : ''}</span></span>
         <span style={{ textAlign: 'right' }}>{inr(t.amount_paise)}{!t.pending && t.member_id === m.id && <><br /><a className="muted" onClick={() => editTx(t)}>edit</a> · <a className="muted" onClick={() => voidTx(t)}>void</a></>}</span></div>))}

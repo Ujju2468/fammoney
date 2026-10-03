@@ -30,3 +30,10 @@ label{font-size:var(--fs-sm);color:var(--muted)}
 .cal div{background:var(--surface);border:1px solid var(--border);border-radius:8px;min-height:52px;padding:2px}
 .cal div.has{border-color:var(--secondary)}.cal small{display:block;color:var(--muted)}.cal b{font-size:var(--fs-sm);color:var(--accent)}
 a{color:var(--danger-text)}
+.hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:.5rem}.hdr h1{margin:0}.clock{text-align:right}.clock b{font-size:var(--fs-xl)}
+.wrap{max-width:980px}.narrow{max-width:640px}
+.home{display:grid;gap:0 1rem}.full{grid-column:1/-1}
+.cal div{cursor:pointer}.cal div.sel{outline:2px solid var(--accent)}
+.card{box-shadow:0 1px 0 rgba(255,255,255,.04) inset}
+@media(min-width:900px){.home{grid-template-columns:1fr 1fr;align-items:start}
+  .nav{top:0;bottom:auto;justify-content:center;gap:1rem;border-top:0;border-bottom:1px solid var(--border);padding:.3rem}.nav a{flex:0 0 100px}.wrap{padding-top:5rem}}

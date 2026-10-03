@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTx, inr, mkey, shiftMonth } from './lib/hooks'
+import { useNotes, occursOn, ymdOf, DayPanel } from './Notes.jsx'
 const COL = ['#c4ed93', '#7bac7e', '#e0787c', '#6fb7c9', '#e0b36b', '#b48ee0', '#e08fb5', '#9aa3b2']
 const MN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const Nav = ({ off, setOff, label }) => <div className="row" style={{ border: 0 }}><button className="alt" style={{ width: 52 }} onClick={() => setOff(off - 1)}>‹</button><b>{label}</b><button className="alt" style={{ width: 52 }} onClick={() => setOff(off + 1)} disabled={off >= 0}>›</button></div>
@@ -26,14 +27,15 @@ export function Charts() {
       : <div className="card">{months.map((v, i) => <div key={i} style={{ margin: '.5rem 0' }}><div className="row" style={{ border: 0, padding: 0 }}><span>{MN[i]}</span><span>{inr(v)}</span></div><div className="bar"><i style={{ width: `${v ? Math.max(3, v / mx * 100) : 0}%` }} /></div></div>)}</div>}</>)
 }
 
-export function Calendar() {
-  const [d] = useTx(), [off, setOff] = useState(0)
-  if (!d) return <p className="muted">Loading…</p>
+export function Calendar({ m }) {
+  const [d] = useTx(), [notes, reloadN] = useNotes(), [off, setOff] = useState(0), [sel, setSel] = useState(ymdOf(new Date()))
+  if (!d || !notes) return <p className="muted">Loading…</p>
   const b = shiftMonth(off), mk = mkey(b), n = new Date(b.getFullYear(), b.getMonth() + 1, 0).getDate(), lead = b.getDay()
-  const day = i => d.tx.filter(t => t.local_date === `${mk}-${String(i).padStart(2, '0')}`).reduce((s, t) => s + t.amount_paise, 0)
+  const y = i => `${mk}-${String(i).padStart(2, '0')}`, day = ds => d.tx.filter(t => t.local_date === ds).reduce((s, t) => s + t.amount_paise, 0)
   const k = p => { const r = p / 100; return r >= 1000 ? (r / 1000).toFixed(r % 1000 ? 1 : 0) + 'k' : Math.round(r) }
-  return (<><h1>Calendar</h1><Nav off={off} setOff={setOff} label={mk} />
+  return (<><h1>Calendar</h1><Nav off={off} setOff={setOff} label={b.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })} />
     <div className="cal">{'SMTWTFS'.split('').map((x, i) => <span key={i} className="muted">{x}</span>)}
       {Array.from({ length: lead }, (_, i) => <i key={'b' + i} />)}
-      {Array.from({ length: n }, (_, i) => { const v = day(i + 1); return <div key={i} className={v ? 'has' : ''}><small>{i + 1}</small><b>{v ? k(v) : ''}</b></div> })}</div></>)
+      {Array.from({ length: n }, (_, i) => { const ds = y(i + 1), v = day(ds); return <div key={i} onClick={() => setSel(ds)} className={(v ? 'has ' : '') + (ds === sel ? 'sel' : '')}><small>{i + 1}{notes.some(x => occursOn(x, ds)) ? ' •' : ''}</small><b>{v ? k(v) : ''}</b></div> })}</div>
+    <DayPanel ymd={sel} notes={notes} m={m} reload={reloadN} spent={day(sel)} /></>)
 }

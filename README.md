@@ -7,6 +7,7 @@ Family expense tracker (blueprint v1.0, `../idea-blueprint.md`). Free stack: Rea
 - [x] Slice 2: app shell (Vite + React + dark theme + sign-in + create household + invites)
 - [x] Slice 3: walking skeleton (add spend offline, sync, second device sees it, bar chart)
 - [x] Slice 4 (MVP core): plan + envelopes, edit/void own spends, charts (month/year), calendar, audit log, installable app with update banner
+- [x] Update 2: grouped categories, budgets, day notes/reminders, clock + weather (run migrations/002 first)
 - [ ] Next: nightly backup job, month close, bill photos, alerts, forced-update screen
 
 ## Run locally
