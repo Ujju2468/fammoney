@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { sb } from './lib/supabase'
+import { sb, openBill } from './lib/supabase'
 import { useData, inr, mkey, shiftMonth } from './lib/hooks'
 const MODES = ['upi', 'cash', 'card', 'netbanking', 'autodebit', 'other']
 const first = d => `${mkey(d)}-01`
@@ -8,7 +8,7 @@ const when = iso => new Date(iso).toLocaleString('en-IN', { day: 'numeric', mont
 export default function Orders({ m, members }) {
   const [d, reload] = useData(async () => {
     const [t, c] = await Promise.all([
-      sb.from('transactions').select('id,member_id,for_member_id,category_id,amount_paise,occurred_at,local_date,mode,status,note,version').order('occurred_at', { ascending: false }).limit(2000),
+      sb.from('transactions').select('id,member_id,for_member_id,category_id,amount_paise,occurred_at,local_date,mode,status,note,version,bill_path').order('occurred_at', { ascending: false }).limit(2000),
       sb.from('categories').select('id,name,parent_id').order('sort')])
     return { tx: t.data || [], cats: c.data || [] }
   }, [])
@@ -37,7 +37,7 @@ export default function Orders({ m, members }) {
     <div className="card"><div className="row" style={{ border: 0 }}><span className="muted">{rows.length} entries</span><b>{inr(total)}</b></div>
       {rows.slice(0, n).map(t => <div className="row" key={t.id} style={{ opacity: t.status === 'void' ? 0.5 : 1 }}>
         <span style={{ textDecoration: t.status === 'void' ? 'line-through' : 'none' }}>{label(t.category_id)}<br /><span className="muted">{nm(t.member_id)}{t.for_member_id ? ` → for ${nm(t.for_member_id)}` : ''} · {when(t.occurred_at)} · {t.mode}{t.note ? ` · ${t.note}` : ''}</span></span>
-        <span style={{ textAlign: 'right' }}>{inr(t.amount_paise)}{t.status === 'active' && t.member_id === m.id && <><br /><a className="muted" onClick={() => editTx(t)}>edit</a> · <a className="muted" onClick={() => voidTx(t)}>void</a></>}</span></div>)}
+        <span style={{ textAlign: 'right' }}>{inr(t.amount_paise)}{t.bill_path && <a onClick={() => openBill(t.bill_path)}> 📎</a>}{t.status === 'active' && t.member_id === m.id && <><br /><a className="muted" onClick={() => editTx(t)}>edit</a> · <a className="muted" onClick={() => voidTx(t)}>void</a></>}</span></div>)}
       {rows.length > n && <button className="alt" onClick={() => setN(n + 50)}>Show more</button>}
       {rows.length === 0 && <p className="muted">Nothing matches these filters.</p>}</div></>)
 }

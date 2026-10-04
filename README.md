@@ -38,3 +38,6 @@ Bill photos, push notifications, visual redesign, more members, Android APK wrap
 
 ## Drop 1 (v0.7.0): look and feel
 New design system (cards, buttons, tables, skeleton loaders), desktop sidebar, Home budget overview ring, new icon, Settings (profile, household, categories), Insights custom range + month comparison + table view.
+
+## Full build (v0.8.0)
+Run `005_full.sql` once (re-runnable). Adds bill photos (private bucket `bills`), "log as paid" on bill reminders, PIN locks (this device only), leave/rejoin, audit filter, delete-everything for Owners, and the Wealth Vault. Push notifications are NOT built yet (reminders and alerts show inside the app).

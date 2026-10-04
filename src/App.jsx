@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { sb, data } from './lib/supabase'
 import Shell from './Shell.jsx'
+import { PinGate } from './Lock.jsx'
 
 const inviteFromUrl = () => new URLSearchParams(location.search).get('invite')
 
@@ -56,5 +57,5 @@ export default function App() {
   if (session === undefined) return <div className="wrap muted">Loading…</div>
   if (!session) return <SignIn />
   if (m === undefined) return <div className="wrap muted">Loading…</div>
-  return m ? <Shell m={m} /> : <Onboarding onDone={load} />
+  return m ? <PinGate k="app" minutes={2} title="FamMoney"><Shell m={m} /></PinGate> : <Onboarding onDone={load} />
 }

@@ -7,14 +7,15 @@ import Plan from './Plan.jsx'
 import Orders from './Orders.jsx'
 import Settings from './Settings.jsx'
 import Overview from './Overview.jsx'
+import Vault from './Vault.jsx'
 import Family from './Family.jsx'
 import Header from './Header.jsx'
 import { useNotes, Upcoming } from './Notes.jsx'
 import { Charts, Calendar } from './Insights.jsx'
-const TABS = [['home', '🏠', 'Home'], ['orders', '📋', 'Orders'], ['plan', '🧾', 'Budget'], ['charts', '📊', 'Insights'], ['cal', '📅', 'Calendar'], ['more', '⚙️', 'More']]
+const TABS = [['home', '🏠', 'Home'], ['orders', '📋', 'Orders'], ['plan', '🧾', 'Budget'], ['charts', '📊', 'Insights'], ['cal', '📅', 'Calendar'], ['vault', '🏦', 'Vault'], ['more', '⚙️', 'More']]
 
 export default function Shell({ m }) {
-  const [tab, setTab] = useState('home'), [members, setMembers] = useState([]), [notes] = useNotes()
+  const [tab, setTab] = useState('home'), [members, setMembers] = useState([]), [notes, reloadNotes] = useNotes()
   const { needRefresh: [need], updateServiceWorker } = useRegisterSW({ onRegisteredSW: (_u, r) => { if (r) setInterval(() => r.update(), 30 * 60 * 1000) } })
   const loadMembers = () => data.members(m.household.id).then(setMembers)
   useEffect(() => { loadMembers() }, [m, tab])
@@ -25,11 +26,12 @@ export default function Shell({ m }) {
   return (<div className={'wrap ' + (tab === 'home' ? '' : 'narrow')} style={{ paddingBottom: '6rem' }}>
     {cfg?.maintenance_mode && <div className="card"><b>Maintenance</b><p className="muted">{cfg.message || 'Back shortly.'}</p></div>}
     {need && <div className="card" style={{ borderColor: 'var(--accent)' }}><b>Update available</b><button onClick={() => updateServiceWorker(true)}>Refresh</button></div>}
-    {tab === 'home' && <><Header m={m} /><Overview m={m} /><Alerts m={m} members={members} /><Upcoming notes={notes} /><div className="home"><Spend m={m} members={members} /></div></>}
+    {tab === 'home' && <><Header m={m} /><Overview m={m} /><Alerts m={m} members={members} /><Upcoming notes={notes} m={m} reload={reloadNotes} /><div className="home"><Spend m={m} members={members} /></div></>}
     {tab === 'orders' && <Orders m={m} members={members} />}
     {tab === 'plan' && <Plan m={m} members={members} />}
     {tab === 'charts' && <Charts />}
     {tab === 'cal' && <Calendar m={m} />}
+    {tab === 'vault' && <Vault m={m} members={members} />}
     {tab === 'more' && <><Settings m={m} members={members} /><Family m={m} members={members} reload={loadMembers} /></>}
-    <nav className="nav"><div className="brand">FamMoney</div>{TABS.map(([k, i, l]) => <a key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}><span>{i}</span>{l}</a>)}</nav></div>)
+    <nav className="nav"><div className="brand">FamMoney</div>{TABS.filter(x => x[0] !== 'vault' || m.role !== 'dependent').map(([k, i, l]) => <a key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}><span>{i}</span>{l}</a>)}</nav></div>)
 }

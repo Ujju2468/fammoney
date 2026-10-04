@@ -31,7 +31,7 @@ table{width:100%;border-collapse:collapse}th,td{padding:.55rem .4rem;border-bott
 .hero{display:flex;gap:1.25rem;align-items:center}.hero svg{flex:none;width:112px}.hero h2{margin:0}
 .brand{display:none}
 .nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--surface);border-top:1px solid var(--border);padding:.4rem .25rem calc(.4rem + env(safe-area-inset-bottom));z-index:9}
-.nav a{flex:1;text-align:center;font-size:var(--fs-sm);color:var(--muted);padding:.3rem 0;min-height:44px}.nav a span{display:block;font-size:1.2rem}.nav a.on{color:var(--accent)}
+.nav a{flex:1;text-align:center;font-size:.68rem;color:var(--muted);padding:.3rem 0;min-height:44px}.nav a span{display:block;font-size:1.2rem}.nav a.on{color:var(--accent)}
 @media(min-width:900px){
   body{padding-left:230px}
   .nav{top:0;right:auto;width:230px;flex-direction:column;border-top:0;border-right:1px solid var(--border);padding:1.25rem .75rem}

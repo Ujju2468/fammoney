@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { sb } from './lib/supabase'
 import { useData } from './lib/hooks'
+import { PinSetting } from './Lock.jsx'
 const COLS = ['#c4ed93', '#7bac7e', '#e0787c', '#6fb7c9', '#e0b36b', '#b48ee0', '#e08fb5', '#9aa3b2']
 export default function Settings({ m, members }) {
   const hid = m.household.id, owner = m.role === 'owner', me = members.find(x => x.id === m.id)
@@ -31,5 +32,7 @@ export default function Settings({ m, members }) {
       {d.cats.filter(c => !c.parent_id).map(g => <div key={g.id}>{line(g)}{d.cats.filter(c => c.parent_id === g.id).map(c => line(c, true))}</div>)}
       <label>New group</label><input value={ng} onChange={e => setNg(e.target.value)} placeholder="e.g. Health" /><button className="alt" disabled={!ng.trim()} onClick={() => addCat(ng, null)}>Add group</button>
       <p className="muted">Archived items stay in old entries but disappear from pickers.</p></div>}
+    <div className="card"><h2>Security</h2><p className="muted">PINs live only on this phone and stop casual access if someone borrows it. They do not replace signing in.</p>
+      <PinSetting k="app" label="App lock PIN" />{m.role !== 'dependent' && <PinSetting k="vault" label="Wealth Vault PIN" />}</div>
     {msg && <p className={msg.startsWith('Saved') ? 'ok' : 'err'}>{msg}</p>}</>)
 }

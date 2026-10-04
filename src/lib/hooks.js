@@ -12,6 +12,6 @@ export function useData(fn, deps) {
 export const useTx = () => useData(async () => {
   const [t, c] = await Promise.all([
     sb.from('transactions').select('category_id,amount_paise,local_date,month_key').eq('status', 'active').limit(5000),
-    sb.from('categories').select('id,name')])
+    sb.from('categories').select('id,name,parent_id,archived')])
   return { tx: t.data || [], cats: c.data || [] }
 }, [])

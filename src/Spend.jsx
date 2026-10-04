@@ -1,20 +1,23 @@
 import { useEffect, useState, useCallback } from 'react'
-import { sb } from './lib/supabase'
+import { sb, openBill } from './lib/supabase'
 import { enqueue, flush, loadQueue, loadFailed, loadCache, saveCache } from './lib/outbox'
 
 const inr = p => '₹' + (p / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 })
 const when = iso => new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
 const monthKey = iso => { const d = new Date(iso); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` }
+async function compress(file) { const b = await createImageBitmap(file); let s = Math.min(1, 1280 / Math.max(b.width, b.height)), q = 0.7, out
+  do { const c = document.createElement('canvas'); c.width = Math.round(b.width * s); c.height = Math.round(b.height * s); c.getContext('2d').drawImage(b, 0, 0, c.width, c.height)
+    out = await new Promise(r => c.toBlob(r, 'image/jpeg', q)); q -= 0.1; s *= 0.9 } while (out.size > 150000 && q > 0.25); return out }
 const MODES = ['upi', 'cash', 'card', 'netbanking', 'autodebit', 'other']
 
 export default function Spend({ m, members }) {
   const hid = m.household.id
   const [cats, setCats] = useState([]), [txs, setTxs] = useState([]), [queue, setQueue] = useState([]), [failed, setFailed] = useState([])
   const [online, setOnline] = useState(navigator.onLine), [busy, setBusy] = useState(false), [at, setAt] = useState(null)
-  const [open, setOpen] = useState(false), [f, setF] = useState({ amt: '', cat: '', mode: 'upi', forM: '', note: '' }), [err, setErr] = useState('')
+  const [open, setOpen] = useState(false), [file, setFile] = useState(null), [f, setF] = useState({ amt: '', cat: '', mode: 'upi', forM: '', note: '' }), [err, setErr] = useState('')
 
   const pull = useCallback(async () => {
-    const { data, error } = await sb.from('transactions').select('id,member_id,for_member_id,category_id,amount_paise,occurred_at,month_key,mode,status,version,note')
+    const { data, error } = await sb.from('transactions').select('id,member_id,for_member_id,category_id,amount_paise,occurred_at,month_key,mode,status,version,note,bill_path')
       .eq('status', 'active').order('occurred_at', { ascending: false }).limit(500)
     if (!error) { setTxs(data); saveCache(data); setAt(new Date()) }
   }, [])
@@ -37,10 +40,12 @@ export default function Spend({ m, members }) {
   const add = async () => {
     const paise = Math.round(parseFloat(f.amt) * 100)
     if (!(paise > 0)) return setErr('Enter an amount above 0')
-    setErr('')
+    setErr(''); const op = crypto.randomUUID(); let bill = null
+    if (file) { if (!navigator.onLine) return setErr('Photos need internet. Remove the photo or connect first.')
+      try { bill = `${hid}/${m.id}/${op}.jpg`; const { error } = await sb.storage.from('bills').upload(bill, await compress(file), { contentType: 'image/jpeg' }); if (error) throw error } catch (e) { return setErr('Photo upload failed: ' + e.message) } }
     await enqueue({ household_id: hid, member_id: m.id, for_member_id: f.forM || null, category_id: f.cat, amount_paise: paise, mode: f.mode, note: f.note.trim() || null,
-      occurred_at: new Date().toISOString(), client_op_id: crypto.randomUUID() })
-    setQueue(await loadQueue()); setF(x => ({ ...x, amt: '', forM: '', note: '' })); setOpen(false); sync()
+      occurred_at: new Date().toISOString(), client_op_id: op, bill_path: bill })
+    setQueue(await loadQueue()); setF(x => ({ ...x, amt: '', forM: '', note: '' })); setFile(null); setOpen(false); sync()
   }
 
   const voidTx = async t => { const r = prompt('Reason for voiding (min 3 letters)'); if (!r || r.length < 3) return
@@ -74,6 +79,7 @@ export default function Spend({ m, members }) {
       <label>Category</label><select value={f.cat} onChange={e => setF({ ...f, cat: e.target.value })}>{cats.filter(g => !g.archived && !g.parent_id).map(g => { const ch = cats.filter(c => c.parent_id === g.id && !c.archived); return ch.length ? <optgroup key={g.id} label={g.name}>{ch.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</optgroup> : <option key={g.id} value={g.id}>{g.name}</option> })}</select>
       <label>Payment mode</label><select value={f.mode} onChange={e => setF({ ...f, mode: e.target.value })}>{MODES.map(x => <option key={x}>{x}</option>)}</select>
       <label>Note (optional)</label><input value={f.note} maxLength={200} onChange={e => setF({ ...f, note: e.target.value })} placeholder="e.g. petrol at HP pump" />
+      <label>Bill photo (optional)</label><input type="file" accept="image/*" capture="environment" onChange={e => setFile(e.target.files[0] || null)} />
       <label>Spent for (optional)</label><select value={f.forM} onChange={e => setF({ ...f, forM: e.target.value })}><option value="">Myself / household</option>{members.filter(x => x.id !== m.id).map(x => <option key={x.id} value={x.id}>{x.display_name}</option>)}</select>
       {err && <p className="err">{err}</p>}
       <button onClick={add}>Save</button><button className="alt" onClick={() => setOpen(false)}>Cancel</button></div>
@@ -82,6 +88,6 @@ export default function Spend({ m, members }) {
     <div className="card full"><h2>Recent activity</h2>
       {all.slice(0, 30).map(t => (<div className="row" key={t.id}>
         <span>{catName(t.category_id)}<br /><span className="muted">{who(t.member_id)}{t.for_member_id ? ` → for ${who(t.for_member_id)}` : ''} · {when(t.occurred_at)}{t.note ? ` · ${t.note}` : ''}{t.pending ? ' · ⏳ waiting to sync' : ''}</span></span>
-        <span style={{ textAlign: 'right' }}>{inr(t.amount_paise)}{!t.pending && t.member_id === m.id && <><br /><a className="muted" onClick={() => editTx(t)}>edit</a> · <a className="muted" onClick={() => voidTx(t)}>void</a></>}</span></div>))}
+        <span style={{ textAlign: 'right' }}>{inr(t.amount_paise)}{t.bill_path && <a onClick={() => openBill(t.bill_path)}> 📎</a>}{!t.pending && t.member_id === m.id && <><br /><a className="muted" onClick={() => editTx(t)}>edit</a> · <a className="muted" onClick={() => voidTx(t)}>void</a></>}</span></div>))}
     </div></>)
 }

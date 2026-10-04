@@ -46,5 +46,5 @@ export function Calendar({ m }) {
     <div className="cal">{'SMTWTFS'.split('').map((x, i) => <span key={i} className="muted">{x}</span>)}
       {Array.from({ length: lead }, (_, i) => <i key={'b' + i} />)}
       {Array.from({ length: n }, (_, i) => { const ds = y(i + 1), v = day(ds); return <div key={i} onClick={() => setSel(ds)} className={(v ? 'has ' : '') + (ds === sel ? 'sel' : '')}><small>{i + 1}{notes.some(x => occursOn(x, ds)) ? ' •' : ''}</small><b>{v ? k(v) : ''}</b></div> })}</div>
-    <DayPanel ymd={sel} notes={notes} m={m} reload={reloadN} spent={day(sel)} /></>)
+    <DayPanel ymd={sel} notes={notes} m={m} reload={reloadN} spent={day(sel)} cats={d.cats} /></>)
 }
