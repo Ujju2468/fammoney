@@ -14,7 +14,7 @@ async function load(mk) {
   const cname = id => { const x = cat[id]; return x ? (x.parent_id && cat[x.parent_id] ? cat[x.parent_id].name + ' > ' : '') + x.name : '' }
   const raw = t.data || []
   const rows = raw.map(x => ({ date: x.local_date, time: new Date(x.occurred_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }), person: mem[x.member_id] || '', for: mem[x.for_member_id] || '',
-    category: cname(x.category_id), amount_inr: x.amount_paise / 100, mode: x.mode, status: x.status, void_reason: x.void_reason || '' }))
+    category: cname(x.category_id), amount_inr: x.amount_paise / 100, mode: x.mode, note: x.note || '', status: x.status, void_reason: x.void_reason || '' }))
   return { raw, rows, al, mem, cat, cname, income: (i.data || []).reduce((s, x) => s + x.amount_paise, 0) }
 }
 function saveFile(name, text, type) {

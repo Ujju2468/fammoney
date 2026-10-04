@@ -1,7 +1,7 @@
 # FamMoney
 
 A private family expense tracker: one salary, budgets per person, every rupee logged, shared live. Installable web app (PWA) for Android, iPhone and desktop.
-Blueprint: `../idea-blueprint.md` (v1.0.2). Stack: React + Vite, Supabase (Postgres, login, live updates), Vercel hosting, all free.
+Blueprint: ../idea-blueprint.md (v1.1). Stack: React + Vite, Supabase (Postgres, login, live updates), Vercel hosting, all free.
 
 ## Decisions for the pilot
 - **Supabase stays** for the first few weeks (DEC-017). Review after real use: stay, self-host on an old laptop, or go phone-only.
@@ -10,7 +10,7 @@ Blueprint: `../idea-blueprint.md` (v1.0.2). Stack: React + Vite, Supabase (Postg
 - **Privacy**: GitHub and Vercel hold only code. Supabase holds the data. Entering salary is optional; budgets and spends work without it.
 
 ## Database (run once each, in order, in Supabase > SQL Editor > New query)
-1. `supabase/migrations/001_init.sql`  2. `002_categories_notes.sql` (safe to re-run)  3. `003_ping.sql`
+1. `001_init.sql`  2. `002_categories_notes.sql`  3. `003_ping.sql` (optional)  4. `004_profile.sql` (lets everyone edit their own name and colour)
 
 ## Run locally
 ```
@@ -20,7 +20,7 @@ npm run dev             # http://localhost:5173
 ```
 ## Deploy (Vercel)
 Import the repo, add `VITE_SUPABASE_URL` and `VITE_SUPABASE_KEY`, deploy. Then Supabase > Authentication > URL Configuration: Site URL + `…/**` redirect = your Vercel address (keep localhost too).
-Install on phones: Chrome > Install app, or Safari > Share > Add to Home Screen. Updates arrive as an "Update available" banner. To force an update: `update app_config set min_app_version = '0.5.0';`
+Install on phones: Chrome > Install app, or Safari > Share > Add to Home Screen. Updates arrive as an "Update available" banner. To force an update: `update app_config set min_app_version = '0.7.0';`
 
 ## Keep-alive (optional, sends no data)
 Free Supabase pauses after 7 idle days; daily family use prevents that. As a safety net, add GitHub secrets `SUPABASE_URL` and `SUPABASE_KEY` (publishable key), then Actions > "Keep Supabase awake" > Run workflow once.
@@ -34,4 +34,7 @@ Free Supabase pauses after 7 idle days; daily family use prevents that. As a saf
 Everyone logs at least 5 entries a week; try offline entries; try edit/void; check alerts; note what annoys you. Then decide the next step.
 
 ## Later (after the pilot)
-Bill photos, custom date ranges, push notifications, visual redesign, more members, Android APK wrapper (Capacitor), self-hosting.
+Bill photos, push notifications, visual redesign, more members, Android APK wrapper (Capacitor), self-hosting, Wealth Vault (Module 2).
+
+## Drop 1 (v0.7.0): look and feel
+New design system (cards, buttons, tables, skeleton loaders), desktop sidebar, Home budget overview ring, new icon, Settings (profile, household, categories), Insights custom range + month comparison + table view.

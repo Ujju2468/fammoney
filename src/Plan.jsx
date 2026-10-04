@@ -16,7 +16,7 @@ export default function Plan({ m, members }) {
     return { plan: p.data, inc: i.data || [], cats: c.data || [], tx: t.data || [], al: al || [] }
   }, [mk])
   const run = async q => { const { error } = await q; setErr(error ? error.message : ''); reload() }
-  if (!d) return <p className="muted">Loading…</p>
+  if (!d) return <div className="skel" />
   const name = id => members.find(x => x.id === id)?.display_name || '…', cname = id => d.cats.find(c => c.id === id)?.name || '…'
   const income = d.inc.reduce((s, x) => s + x.amount_paise, 0), alloc = d.al.reduce((s, x) => s + x.amount_paise, 0)
   return (<>
